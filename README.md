@@ -26,8 +26,8 @@ git clone https://github.com/rickakkerman/InterDyn.git
 ```
 2. Create a conda environment:
 ```bash
-conda create -n interdyn python=3.10 -y
-conda activate interdyn
+conda create -n id python=3.10 -y
+conda activate id
 ```
 3. Install dependencies (please refer to [requirements.txt](requirements.txt)):
 ```bash

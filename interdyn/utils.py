@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import os
 import random
+import numpy as np
 
 import av  # noqa: F401  # imported for side‑effects in some environments
 import torch
@@ -240,7 +241,9 @@ def build_transform(
 
 
 def load_sample(
-    local_dir,
+    dataset_path,
+    data_files,
+    index,
     generator,
     crop_type: str = "center",
     target_fps: int = 6,
@@ -251,6 +254,7 @@ def load_sample(
     continuous_visibility: bool = False,
     data_range: str = "0-1",
     data_format: str = "TCHW",
+    source_fps : int = 12,
 ) -> None:
 
     transform = build_transform(
@@ -260,11 +264,17 @@ def load_sample(
         generator=generator,
     )
 
-    video_path = f"{local_dir}/video.webm"
-    control_path = f"{local_dir}/mask_hand.webm"
+    path_dir = os.path.join(dataset_path, data_files[index])
+    video_id = path_dir.split("/")[-1].split(".")[0].split("_")[0]
 
-    vr = VideoReader(control_path, ctx=cpu(0), num_threads=1)
-    num_frames, fps = len(vr), int(vr.get_avg_fps())
+    video_data = np.load(path_dir, allow_pickle=True)
+    frames_np = video_data["frame"] # [num_frames, C, H, W]
+    frames = np.transpose(frames_np, (0, 2, 3, 1)) # [num_frames, H, W, C]
+    masks_np = video_data["mask"] # [num_frames, 2, H, W]
+    masks = np.transpose(masks_np, (0, 2, 3, 1)) # [num_frames, H, W, 2]
+
+    num_frames = int(frames_np.shape[0])
+    fps = int(source_fps)
 
     resample_factor = (fps // target_fps)
     min_num_frames = target_num_frames * resample_factor
@@ -281,8 +291,14 @@ def load_sample(
     )
 
     # Load sequences
-    frames = load_frames(video_path, indices)
-    control = load_frames(control_path, indices)
+    frames_sel = frames_np[indices]
+    masks_sel = masks_np[indices]
+
+    frames_t = torch.from_numpy(frames_sel)
+    masks_t = torch.from_numpy(masks_sel)
+
+    frames = tv_tensors.Video(frames_t)   # shape [T, C, H, W]
+    control = tv_tensors.Video(masks_t)
 
     # Joint transform: frames and masks
     frames, control = transform(frames, control)
