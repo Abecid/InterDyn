@@ -69,7 +69,11 @@ def demo(args):
     data_files = os.listdir(dataset_path)
 
     for index in tqdm(range(num_videos)):
-        frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
+        try:
+            frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
+        except Exception as e:
+            print(f"Error loading sample at index {index}: {e}")
+            continue
 
         pred = pipeline(
             image=frames[:, 0],
