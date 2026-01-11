@@ -268,10 +268,8 @@ def load_sample(
     video_id = path_dir.split("/")[-1].split(".")[0].split("_")[0]
 
     video_data = np.load(path_dir, allow_pickle=True)
-    frames_np = video_data["frame"] # [num_frames, C, H, W]
-    frames = np.transpose(frames_np, (0, 2, 3, 1)) # [num_frames, H, W, C]
-    masks_np = video_data["mask"] # [num_frames, 2, H, W]
-    masks = np.transpose(masks_np, (0, 2, 3, 1)) # [num_frames, H, W, 2]
+    frames_np = video_data["frame"] * 255 # [num_frames, C, H, W] range: (0, 1)
+    masks_np = video_data["mask"] * 255 # [num_frames, 2, H, W] range: (0, 1)
 
     num_frames = int(frames_np.shape[0])
     fps = int(source_fps)
@@ -314,6 +312,9 @@ def load_sample(
     # Reformat channels and scale
     frames_t = format(frames_t, data_range, data_format).unsqueeze(0)
     control_t = format(control_t, data_range, data_format).unsqueeze(0)
+
+    print("frames_t range:", frames_t.min().item(), frames_t.max().item(), frames_t.dtype)
+    print("control_t range:", control_t.min().item(), control_t.max().item(), control_t.dtype)
 
     return frames_t, control_t
 
