@@ -303,7 +303,13 @@ def load_sample(
     # Joint transform: frames and masks
     frames, control = transform(frames, control)
     frames_t = frames.as_subclass(torch.Tensor)
-    control_t = control.as_subclass(torch.Tensor)
+    control_t = control.as_subclass(torch.Tensor) # [T, 2, H, W]
+
+    # OR / union across the two mask channels → [T, 1, H, W]
+    control_t = control_t.max(dim=1, keepdim=True).values
+
+    # convert grayscale mask to RGB-style conditioning → [T, 3, H, W]
+    control_t = control_t.repeat(1, 3, 1, 1)
 
     # Reformat channels and scale
     frames_t = format(frames_t, data_range, data_format).unsqueeze(0)
