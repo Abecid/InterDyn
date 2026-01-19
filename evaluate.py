@@ -1,5 +1,6 @@
 import os
 import json
+from tqdm import tqdm
 
 import evaluate_utils
 
@@ -12,7 +13,7 @@ def main():
         "psnr": [],
         "lpips": []
     }
-    for data_dir in os.listdir(dataset_path):
+    for data_dir in tqdm(os.listdir(dataset_path)):
         data_path = os.path.join(dataset_path, data_dir)
         real_video_path = os.path.join(data_path, "ground_truth.mp4")
         fake_video_path = os.path.join(data_path, "prediction_0.mp4")
@@ -25,7 +26,7 @@ def main():
         
         # Save to json
         with open(os.path.join(data_path, "metrics.json"), "w") as f:
-            json.dump(metrics, f, indent=4)
+            json.dump(metrics_dict, f, indent=4)
 
         # compute averages
         avg_metrics = {k: sum(v) / len(v) for k, v in totals.items()}
