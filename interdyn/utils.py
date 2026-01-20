@@ -21,6 +21,17 @@ from decord import VideoReader, cpu
 decord.bridge.set_bridge("torch")
 
 
+def load_custom_image_as_frame(image_path, frames0):
+    # frames0 is frames[:,0] so we match device/dtype/size
+    H, W = frames0.shape[-2], frames0.shape[-1]
+
+    img = Image.open(image_path).convert("RGB")
+    img = F.resize(img, (H, W), interpolation=InterpolationMode.BILINEAR, antialias=True)
+
+    x = F.to_tensor(img).unsqueeze(0)              # [1,3,H,W], float32, [0,1]
+    x = x.to(device=frames0.device, dtype=frames0.dtype)
+    return x
+
 class MaskAwareCrop(nn.Module):
     """
     Crop a video and its corresponding mask so that the cropped region
@@ -283,7 +294,7 @@ def load_sample(
 
     # Sample frame indices
     indices = sample_frames(
-        start_indices=list(range(num_frames - min_num_frames + 1)),
+        start_indices=[0],
         min_num_frames=min_num_frames,
         resample_factor=resample_factor,
     )

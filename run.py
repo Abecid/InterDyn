@@ -10,7 +10,7 @@ from diffusers.training_utils import set_seed
 from interdyn.unet_spatio_temporal_condition_controlnet import UNetSpatioTemporalConditionControlNetModel
 from interdyn.controlnet_sdv import ControlNetSDVModel
 from interdyn.pipeline import InterDynPipeline
-from interdyn.utils import load_sample, post_process_sample, log_local
+from interdyn.utils import load_sample, post_process_sample, log_local, load_custom_image_as_frame
 
 
 def demo(args):
@@ -41,7 +41,7 @@ def demo(args):
     output_path = args.output_dir
     num_videos = args.num_videos
     data_path = args.data_path
-
+    input_image_path = args.input_image_path
 
     # MMDDHHMM
     datetime_now = datetime.now().strftime("%m%d%H%M")
@@ -77,14 +77,17 @@ def demo(args):
     for index in tqdm(range(num_videos)):
         if index >= len(data_files):
             break
-        try:
-            frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
-        except Exception as e:
-            print(f"Error loading sample at index {index}: {e}")
-            continue
+        # try:
+        frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
+        # except Exception as e:
+        #     print(f"Error loading sample at index {index}: {e}")
+        #     continue
+
+        frames0 = frames[:, 0]
+        custom_frame = load_custom_image_as_frame(input_image_path, frames0)
 
         pred = pipeline(
-            image=frames[:, 0],
+            image=custom_frame,
             controlnet_cond=controlnet_cond,
             num_inference_steps=args.num_inference_steps,
             num_videos_per_prompt=args.num_videos_per_prompt,
@@ -109,6 +112,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num_videos", type=int, default=1)
     parser.add_argument("--data_path", type=str, default="input/ex3/ex3_0.npz")
+    parser.add_argument("--input_image_path", type=str, default="input/ex3/first_frame.png")
     args = parser.parse_args()
 
     demo(args)
