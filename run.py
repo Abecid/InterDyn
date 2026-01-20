@@ -42,6 +42,8 @@ def demo(args):
     num_videos = args.num_videos
     data_path = args.data_path
     input_image_path = args.input_image_path
+    num_frames = args.num_frames
+    fps = args.fps
 
     # MMDDHHMM
     datetime_now = datetime.now().strftime("%m%d%H%M")
@@ -78,7 +80,7 @@ def demo(args):
         if index >= len(data_files):
             break
         # try:
-        frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
+        frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator, target_num_frames=num_frames, target_fps=fps)
         # except Exception as e:
         #     print(f"Error loading sample at index {index}: {e}")
         #     continue
@@ -93,6 +95,8 @@ def demo(args):
             num_videos_per_prompt=args.num_videos_per_prompt,
             generator=generator,
             output_type="pt",
+            num_frames=num_frames,
+            fps=fps,
         ).frames
 
         video_dict = post_process_sample(frames, controlnet_cond, pred)
@@ -113,6 +117,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_videos", type=int, default=1)
     parser.add_argument("--data_path", type=str, default="input/ex3/ex3_0.npz")
     parser.add_argument("--input_image_path", type=str, default="input/ex3/first_frame.png")
+    parser.add_argument("--num_frames", type=int, default=45)
+    parser.add_argument("--fps", type=int, default=12)
     args = parser.parse_args()
 
     demo(args)
