@@ -40,6 +40,7 @@ def demo(args):
 
     output_path = args.output_dir
     num_videos = args.num_videos
+    data_path = args.data_path
 
 
     # MMDDHHMM
@@ -48,27 +49,34 @@ def demo(args):
     os.makedirs(root_output_path, exist_ok=True)
 
     video_list = []
-    dataset_path = "/ephemeral/datasets/ssv2"
-    
-    base_path = dataset_path
-    metadata_path = "./data/labels"
-    pose_dir = base_path
-    label_dir = metadata_path
 
-    with open(f"{label_dir}/train.json", "r") as f:
-        train_data = json.load(f)
-        train_data = {item["id"]: item["label"] for item in train_data}
-    with open(f"{label_dir}/validation.json", "r") as f:
-        val_data = json.load(f)
-        val_data = {item["id"]: item["label"] for item in val_data}
-    
-    file_list = os.listdir(pose_dir)
-    for iii_index in file_list:
-        video_list.append(f"{pose_dir}/{iii_index}")
-    
-    data_files = os.listdir(dataset_path)
+    if data_path is None:
+        dataset_path = "/ephemeral/datasets/ssv2"
+        
+        base_path = dataset_path
+        metadata_path = "./data/labels"
+        pose_dir = base_path
+        label_dir = metadata_path
+
+        with open(f"{label_dir}/train.json", "r") as f:
+            train_data = json.load(f)
+            train_data = {item["id"]: item["label"] for item in train_data}
+        with open(f"{label_dir}/validation.json", "r") as f:
+            val_data = json.load(f)
+            val_data = {item["id"]: item["label"] for item in val_data}
+        
+        file_list = os.listdir(pose_dir)
+        for iii_index in file_list:
+            video_list.append(f"{pose_dir}/{iii_index}")
+        
+        data_files = os.listdir(dataset_path)
+    else:
+        dataset_path = os.path.dirname(data_path)
+        data_files = [os.path.basename(data_path)]
 
     for index in tqdm(range(num_videos)):
+        if index >= len(data_files):
+            break
         try:
             frames, controlnet_cond = load_sample(dataset_path, data_files, index, generator=generator)
         except Exception as e:
@@ -100,6 +108,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_inference_steps", type=int, default=50)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--num_videos", type=int, default=1)
+    parser.add_argument("--data_path", type=str, default="input/ex3/ex3_0.npz")
     args = parser.parse_args()
 
     demo(args)
